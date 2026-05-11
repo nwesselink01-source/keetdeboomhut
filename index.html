@@ -969,16 +969,16 @@
         <!-- Code display -->
         <div class="code-label">Toegangscode</div>
         <div class="code-row" id="codeRow">
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d0" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d1" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d2" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d3" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d4" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d5" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d6" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d7" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d8" autocomplete="off"/>
-          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d9" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d0" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d1" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d2" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d3" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d4" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d5" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d6" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d7" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d8" autocomplete="off"/>
+          <input class="code-digit" type="text" inputmode="none" readonly id="d9" autocomplete="off"/>
         </div>
 
         <div class="hline"></div>
@@ -1123,6 +1123,9 @@
   const alarmWarning    = document.getElementById('alarmWarning');
   const armedLed        = document.getElementById('armedLed');
   const dialBody        = document.getElementById('dialBody');
+
+  // Prevent virtual keyboard on mobile — inputs are display-only
+  digits.forEach(d => d.addEventListener('focus', () => d.blur()));
 
   let locked = false;
 
