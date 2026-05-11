@@ -1,0 +1,1648 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Keet de Boomhut – Kameradenweekend 2026</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;1,300&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #04060a;
+    --gold: #c9a84c;
+    --gold-bright: #e8c56a;
+    --copper: #b87333;
+    --alarm: #cc0000;
+    --green: #00cc66;
+    --cream: #e0d4b8;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { height:100%; }
+  body { min-height:100%; overflow-x:hidden; overflow-y:auto; }
+  body {
+    background: var(--bg);
+    color: var(--cream);
+    font-family: 'Crimson Pro', serif;
+    min-height: 100vh;
+    cursor: crosshair;
+  }
+
+  /* CANVAS EMBERS */
+  #bgCanvas { position:fixed; inset:0; z-index:0; }
+
+  /* VIGNETTE */
+  .vignette {
+    position: fixed; inset:0;
+    background: radial-gradient(ellipse at center, transparent 25%, rgba(0,0,0,0.85) 100%);
+    z-index:1; pointer-events:none;
+  }
+
+  /* SCANLINES */
+  .scanlines {
+    position: fixed; inset:0;
+    background: repeating-linear-gradient(0deg,
+      rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px,
+      transparent 1px, transparent 4px);
+    z-index:2; pointer-events:none;
+  }
+
+  /* ===== ALARM OVERLAY ===== */
+  #alarmOverlay {
+    position:fixed; inset:0; z-index:700;
+    background:#cc0000; opacity:0; pointer-events:none;
+  }
+  #alarmOverlay.active { animation: strobeAlarm 3.2s ease-out forwards; }
+  @keyframes strobeAlarm {
+    0%   { opacity:0; }
+    3%   { opacity:0.65; }
+    7%   { opacity:0.02; }
+    12%  { opacity:0.6; }
+    17%  { opacity:0.02; }
+    22%  { opacity:0.55; }
+    28%  { opacity:0.02; }
+    35%  { opacity:0.45; }
+    44%  { opacity:0.18; }
+    58%  { opacity:0.08; }
+    78%  { opacity:0.03; }
+    100% { opacity:0; }
+  }
+
+  /* ===== ALARM WARNING TEXT ===== */
+  #alarmWarning {
+    position:fixed; inset:0; z-index:710;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    pointer-events:none; opacity:0;
+    padding:0 16px;
+  }
+  #alarmWarning.active { animation: warnFade 0.3s ease-out forwards; }
+  @keyframes warnFade {
+    0%   { opacity:0; }
+    100% { opacity:1; }
+  }
+  #alarmWarning.active .alarm-sub { font-size:clamp(10px,2.5vw,16px); margin-top:20px; }
+  #alarmWarning .click-hint {
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(8px,1.6vw,11px); letter-spacing:0.3em;
+    color:rgba(255,100,100,0.45); margin-top:28px; text-transform:uppercase;
+    animation:hintBlink 1.4s step-end infinite;
+  }
+  @keyframes hintBlink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+  .alarm-main {
+    font-family:'Cinzel', serif;
+    font-size: clamp(22px, 6vw, 58px);
+    font-weight:900;
+    color:#ff0000;
+    letter-spacing:0.12em;
+    text-align:center;
+    text-shadow: 0 0 20px rgba(255,0,0,1), 0 0 60px rgba(255,0,0,0.6), 0 0 120px rgba(255,0,0,0.3);
+    animation: alarmFlicker 0.1s step-end infinite;
+  }
+  .alarm-sub {
+    font-family:'Share Tech Mono', monospace;
+    font-size: clamp(9px, 2.2vw, 14px);
+    color: rgba(255,80,80,0.9);
+    letter-spacing:0.35em; margin-top:14px; text-align:center;
+  }
+  .alarm-code {
+    font-family:'Share Tech Mono', monospace;
+    font-size: clamp(7px,1.5vw,10px);
+    color: rgba(255,55,55,0.5);
+    letter-spacing:0.2em; margin-top:8px; text-align:center;
+  }
+  @keyframes alarmFlicker { 0%,100%{opacity:1;} 50%{opacity:0.6;} }
+
+  /* ===== PAGE ===== */
+  .page {
+    position:relative; z-index:10;
+    min-height:100vh;
+    display:flex; align-items:flex-start; justify-content:center;
+    padding:16px 10px 32px;
+  }
+
+  /* ===== VAULT DOOR ===== */
+  .vault-door {
+    width:100%; max-width:510px;
+    animation: vaultDrop 1.5s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  @keyframes vaultDrop {
+    from { opacity:0; transform:translateY(60px) scale(0.94); }
+    to   { opacity:1; transform:translateY(0) scale(1); }
+  }
+  .vault-door.shake {
+    animation: bigShake 0.95s cubic-bezier(0.36,0.07,0.19,0.97) both !important;
+  }
+  @keyframes bigShake {
+    0%,100% { transform:translate(0,0) rotate(0deg); }
+    4%   { transform:translate(-22px,4px) rotate(-2.2deg); }
+    9%   { transform:translate(22px,-4px) rotate(2.2deg); }
+    14%  { transform:translate(-28px,2px) rotate(-2.8deg); }
+    19%  { transform:translate(28px,-2px) rotate(2.8deg); }
+    24%  { transform:translate(-22px,5px) rotate(-1.8deg); }
+    29%  { transform:translate(22px,-5px) rotate(1.8deg); }
+    35%  { transform:translate(-32px,0) rotate(-3.2deg); }
+    41%  { transform:translate(32px,0) rotate(3.2deg); }
+    47%  { transform:translate(-18px,3px) rotate(-1.5deg); }
+    53%  { transform:translate(18px,-3px) rotate(1.5deg); }
+    61%  { transform:translate(-11px,0); }
+    69%  { transform:translate(11px,0); }
+    77%  { transform:translate(-5px,0); }
+    85%  { transform:translate(5px,0); }
+    93%  { transform:translate(-2px,0); }
+  }
+
+  /* ===== DOOR FRAME (outer steel) ===== */
+  .door-frame {
+    background: linear-gradient(155deg, #1e1b13 0%, #0e0c09 45%, #171410 100%);
+    border: 4px solid #231f16;
+    border-radius: 7px;
+    padding: 8px;
+    box-shadow:
+      0 0 0 1px #090806,
+      0 40px 120px rgba(0,0,0,0.97),
+      0 0 80px rgba(201,168,76,0.05),
+      inset 0 3px 0 rgba(90,70,25,0.28),
+      inset 0 -3px 0 rgba(0,0,0,0.65);
+    position: relative;
+    /* Ambient breathing glow */
+    animation: doorBreath 4s ease-in-out infinite;
+  }
+  @keyframes doorBreath {
+    0%,100% { box-shadow: 0 0 0 1px #090806, 0 40px 120px rgba(0,0,0,0.97), 0 0 40px rgba(201,168,76,0.04), inset 0 3px 0 rgba(90,70,25,0.28), inset 0 -3px 0 rgba(0,0,0,0.65); }
+    50%     { box-shadow: 0 0 0 1px #090806, 0 40px 120px rgba(0,0,0,0.97), 0 0 90px rgba(201,168,76,0.10), inset 0 3px 0 rgba(90,70,25,0.28), inset 0 -3px 0 rgba(0,0,0,0.65); }
+  }
+  /* Frame center bolts top/bottom */
+  .door-frame::before, .door-frame::after {
+    content:''; position:absolute;
+    width:14px; height:14px; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #3a3020, #0d0b07);
+    border:1.5px solid #2a2416;
+    box-shadow:0 2px 4px rgba(0,0,0,0.9), inset 0 1px 0 rgba(90,70,20,0.3);
+    left:50%; transform:translateX(-50%);
+  }
+  .door-frame::before { top:3px; }
+  .door-frame::after  { bottom:3px; }
+
+  /* ===== DOOR PANEL (inner security panel) ===== */
+  .door-panel {
+    background: linear-gradient(165deg, #10161f 0%, #080d14 55%, #0d1320 100%);
+    border: 2px solid #1a2232;
+    border-radius: 4px;
+    padding: 22px 20px 18px;
+    position: relative;
+    overflow: hidden;
+  }
+  .door-panel::before {
+    content:''; position:absolute;
+    top:-50%; left:50%; transform:translateX(-50%);
+    width:70%; height:70%;
+    background:radial-gradient(ellipse, rgba(201,168,76,0.05) 0%, transparent 70%);
+    pointer-events:none;
+  }
+  .door-panel.flicker { animation: panelFlicker 0.14s linear; }
+  @keyframes panelFlicker {
+    0%  { opacity:1; }
+    25% { opacity:0.82; }
+    50% { opacity:1; }
+    75% { opacity:0.88; }
+    100%{ opacity:0.96; }
+  }
+
+  /* ===== CORNER BOLTS ===== */
+  .bolt {
+    position:absolute; width:20px; height:20px; border-radius:50%;
+    background:radial-gradient(circle at 32% 28%, #48402c 0%, #1a1408 100%);
+    border:2px solid #2c2418;
+    box-shadow:0 3px 6px rgba(0,0,0,0.95), inset 0 1.5px 0 rgba(110,88,30,0.35);
+  }
+  /* Phillips screw mark */
+  .bolt::before, .bolt::after {
+    content:''; position:absolute; background:rgba(70,58,18,0.45); border-radius:1px;
+    top:50%; left:50%;
+  }
+  .bolt::before { width:8px; height:1.5px; transform:translate(-50%,-50%); }
+  .bolt::after  { width:1.5px; height:8px; transform:translate(-50%,-50%); }
+  .bolt-tl { top:10px; left:10px; }
+  .bolt-tr { top:10px; right:10px; }
+  .bolt-bl { bottom:10px; left:10px; }
+  .bolt-br { bottom:10px; right:10px; }
+
+  /* ===== ARMED LED ===== */
+  .armed-strip {
+    position:absolute; top:12px; right:38px;
+    display:flex; align-items:center; gap:5px;
+  }
+  .armed-led {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--alarm);
+    box-shadow:0 0 6px var(--alarm), 0 0 14px rgba(204,0,0,0.45);
+    animation:ledPulse 2s ease-in-out infinite;
+  }
+  .armed-led.alarming {
+    animation:none !important;
+    background:#ff0000 !important;
+    box-shadow:0 0 24px #ff0000, 0 0 48px rgba(255,0,0,0.9) !important;
+  }
+  @keyframes ledPulse { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
+  .armed-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.15em;
+    color:rgba(204,0,0,0.45); text-transform:uppercase;
+  }
+
+  /* ===== LOGO ===== */
+  .logo-wrap {
+    text-align:center; margin-bottom:10px;
+    animation:fadeDown 0.8s 0.5s both;
+  }
+  .logo-wrap img {
+    width:180px; max-width:60vw;
+    filter:drop-shadow(0 4px 18px rgba(201,168,76,0.18)) brightness(0.88);
+  }
+  @keyframes fadeDown {
+    from{opacity:0;transform:translateY(-14px);}
+    to{opacity:1;transform:translateY(0);}
+  }
+
+  /* ===== COMBINATION DIAL ===== */
+  .dial-area { display:flex; justify-content:center; margin-bottom:10px; }
+  .dial-ring-outer {
+    width:68px; height:68px; border-radius:50%;
+    border:1px solid rgba(201,168,76,0.1);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+  }
+  .dial-ring-outer::before {
+    content:''; position:absolute; inset:-6px; border-radius:50%;
+    border:1px solid rgba(201,168,76,0.05);
+  }
+  .dial-body {
+    width:54px; height:54px; border-radius:50%;
+    background:radial-gradient(circle at 33% 30%, #2a2318 0%, #0f0c08 100%);
+    border:2px solid #2e2718;
+    box-shadow:0 5px 14px rgba(0,0,0,0.95), inset 0 2px 4px rgba(110,88,28,0.2), 0 0 18px rgba(201,168,76,0.06);
+    position:relative;
+    animation:dialSpin 16s linear infinite;
+  }
+  @keyframes dialSpin { from{transform:rotate(0deg);} to{transform:rotate(360deg);} }
+  /* Notch / marker */
+  .dial-body::before {
+    content:''; position:absolute; top:4px; left:50%; transform:translateX(-50%);
+    width:3px; height:9px; border-radius:1px;
+    background:var(--gold); box-shadow:0 0 7px rgba(201,168,76,0.7);
+  }
+  /* Center hub */
+  .dial-body::after {
+    content:''; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:10px; height:10px; border-radius:50%;
+    background:radial-gradient(circle, #5a4a25, #1a1308);
+    border:1px solid #3a3016;
+    box-shadow:0 2px 4px rgba(0,0,0,0.8);
+  }
+  /* Dashed inner ring (tick marks) */
+  .dial-ticks {
+    position:absolute; inset:4px; border-radius:50%;
+    border:1px dashed rgba(201,168,76,0.12);
+    pointer-events:none;
+  }
+
+  /* ===== VAULT HEADING ===== */
+  .vault-heading { text-align:center; margin-bottom:12px; }
+  .vault-title {
+    font-family:'Cinzel', serif;
+    font-size:clamp(10px,2.2vw,12px);
+    letter-spacing:0.35em; color:var(--gold); opacity:0.72;
+    text-transform:uppercase; margin-bottom:3px;
+  }
+  .vault-subtitle {
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(8px,1.6vw,9px); letter-spacing:0.22em;
+    color:rgba(201,168,76,0.27); text-transform:uppercase;
+  }
+
+  /* ===== HLINE ===== */
+  .hline {
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(201,168,76,0.2), transparent);
+    margin:0 0 12px;
+  }
+
+  /* ===== CODE DISPLAY ===== */
+  .code-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.5em; color:rgba(201,168,76,0.28);
+    text-align:center; margin-bottom:7px; text-transform:uppercase;
+  }
+  .code-row {
+    display:flex; gap:3px; justify-content:center; margin-bottom:14px;
+  }
+  .code-digit {
+    width:36px; height:46px;
+    background:linear-gradient(180deg,#030509 0%,#060b12 100%);
+    border:1px solid rgba(201,168,76,0.12);
+    border-bottom:2px solid rgba(0,0,0,0.9);
+    border-radius:2px;
+    color:var(--gold-bright);
+    font-family:'Share Tech Mono', monospace;
+    font-size:18px; text-align:center; outline:none;
+    caret-color:transparent;
+    transition:border-color 0.15s;
+    -moz-appearance:textfield;
+    box-shadow:inset 0 3px 7px rgba(0,0,0,0.95), inset 0 0 12px rgba(0,0,0,0.6);
+    text-shadow:0 0 8px rgba(201,168,76,0.4);
+  }
+  .code-digit::-webkit-outer-spin-button,
+  .code-digit::-webkit-inner-spin-button { -webkit-appearance:none; }
+  .code-digit:focus {
+    border-color:rgba(201,168,76,0.5);
+    box-shadow:inset 0 3px 7px rgba(0,0,0,0.95), 0 0 10px rgba(201,168,76,0.14);
+  }
+  .code-digit.filled {
+    border-color:rgba(201,168,76,0.32);
+    text-shadow:0 0 14px rgba(201,168,76,0.65);
+  }
+  .code-digit.glow-in { animation:digitGlow 0.28s ease-out; }
+  @keyframes digitGlow {
+    0%  { box-shadow:inset 0 3px 7px rgba(0,0,0,0.95), 0 0 24px rgba(201,168,76,0.55); border-color:rgba(201,168,76,0.85); }
+    100%{ box-shadow:inset 0 3px 7px rgba(0,0,0,0.95), 0 0 10px rgba(201,168,76,0.14); border-color:rgba(201,168,76,0.32); }
+  }
+  .code-digit.error {
+    border-color:rgba(220,0,0,0.75) !important;
+    background:linear-gradient(180deg,#0d0002 0%,#070001 100%) !important;
+    box-shadow:0 0 16px rgba(204,0,0,0.55), inset 0 3px 7px rgba(0,0,0,0.95), inset 0 0 12px rgba(140,0,0,0.35) !important;
+    color:#ff3333 !important; text-shadow:0 0 12px rgba(255,0,0,0.95) !important;
+    animation:errFlicker 0.09s linear infinite !important;
+  }
+  @keyframes errFlicker { 0%,100%{opacity:1;} 50%{opacity:0.75;} }
+  .code-digit.success {
+    border-color:rgba(0,200,90,0.65) !important;
+    background:linear-gradient(180deg,#001008 0%,#000805 100%) !important;
+    box-shadow:0 0 14px rgba(0,200,90,0.45) !important;
+    color:#00ff88 !important; text-shadow:0 0 10px rgba(0,255,136,0.65) !important;
+  }
+  .code-digit.verifying { animation:verifyPulse 0.75s ease-in-out infinite; }
+  @keyframes verifyPulse { 0%,100%{opacity:1;} 50%{opacity:0.45;} }
+
+  /* ===== NUMPAD ===== */
+  .numpad-housing {
+    background:linear-gradient(180deg,#060a10 0%,#050809 100%);
+    border:1px solid #141c28;
+    border-radius:4px; padding:9px; margin-bottom:13px;
+    box-shadow:inset 0 3px 9px rgba(0,0,0,0.95);
+  }
+  .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; }
+  .num-btn {
+    background:linear-gradient(180deg,#1c2230 0%,#131826 100%);
+    border:1px solid rgba(201,168,76,0.1);
+    border-bottom:2px solid rgba(0,0,0,0.75);
+    border-radius:3px; color:var(--cream);
+    font-family:'Cinzel', serif; font-size:15px; font-weight:600;
+    padding:12px 5px; cursor:pointer;
+    position:relative; overflow:hidden;
+    transition:color 0.1s, border-color 0.1s;
+    user-select:none; -webkit-tap-highlight-color:transparent;
+    box-shadow:0 2px 5px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .num-btn:hover {
+    color:var(--gold-bright); border-color:rgba(201,168,76,0.28);
+    box-shadow:0 2px 9px rgba(0,0,0,0.9), 0 0 12px rgba(201,168,76,0.09), inset 0 1px 0 rgba(255,255,255,0.04);
+  }
+  .num-btn:active {
+    transform:translateY(1px); border-bottom-width:1px;
+    box-shadow:0 1px 2px rgba(0,0,0,0.8), inset 0 2px 5px rgba(0,0,0,0.65);
+    background:linear-gradient(180deg,#0e1218 0%,#0c1016 100%);
+  }
+  .num-btn.zero { grid-column:2; }
+  .num-btn.del {
+    background:linear-gradient(180deg,#1a1018 0%,#120b14 100%);
+    border-color:rgba(180,55,55,0.15);
+    color:rgba(200,100,100,0.75);
+    font-size:10px; letter-spacing:0.06em;
+  }
+  .num-btn.del:hover { color:#ff7777; border-color:rgba(200,0,0,0.32); box-shadow:0 2px 9px rgba(0,0,0,0.9), 0 0 12px rgba(200,0,0,0.08); }
+
+  /* SPARK */
+  .spark {
+    position:absolute; border-radius:50%; pointer-events:none;
+    animation:sparkFly 0.45s ease-out forwards;
+  }
+  @keyframes sparkFly {
+    0%  { transform:translate(0,0) scale(1); opacity:1; }
+    65% { opacity:0.6; }
+    100%{ transform:translate(var(--sx),var(--sy)) scale(0); opacity:0; }
+  }
+
+  /* ===== SUBMIT ===== */
+  .submit-wrap { width:100%; }
+  .submit-btn {
+    width:100%; padding:14px;
+    background:linear-gradient(180deg,#27200e 0%,#1a1308 100%);
+    border:1px solid rgba(201,168,76,0.3);
+    border-bottom:2px solid rgba(0,0,0,0.75);
+    border-radius:3px; color:var(--gold);
+    font-family:'Cinzel', serif; font-size:clamp(11px,2.2vw,13px);
+    font-weight:700; letter-spacing:0.28em; cursor:pointer;
+    position:relative; overflow:hidden;
+    transition:all 0.2s ease;
+    box-shadow:0 4px 14px rgba(0,0,0,0.75), 0 0 24px rgba(201,168,76,0.05), inset 0 1px 0 rgba(201,168,76,0.13);
+    text-shadow:0 0 14px rgba(201,168,76,0.28); text-transform:uppercase;
+  }
+  .submit-btn:hover:not(:disabled) {
+    background:linear-gradient(180deg,#382d16 0%,#24190b 100%);
+    border-color:rgba(201,168,76,0.58); color:var(--gold-bright);
+    box-shadow:0 4px 22px rgba(0,0,0,0.9), 0 0 35px rgba(201,168,76,0.14), inset 0 1px 0 rgba(201,168,76,0.22);
+    text-shadow:0 0 22px rgba(201,168,76,0.55);
+  }
+  .submit-btn:active:not(:disabled) {
+    transform:translateY(1px); border-bottom-width:1px;
+    box-shadow:0 2px 7px rgba(0,0,0,0.8), inset 0 2px 5px rgba(0,0,0,0.45);
+  }
+  .submit-btn:disabled { opacity:0.22; cursor:not-allowed; border-color:rgba(201,168,76,0.07); }
+  .submit-btn::after {
+    content:''; position:absolute; top:0; left:-100%;
+    width:60%; height:100%;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.09),transparent);
+    transition:left 0.65s ease;
+  }
+  .submit-btn:hover:not(:disabled)::after { left:160%; }
+
+  /* ===== VERIFYING ===== */
+  .verifying-overlay {
+    display:none; flex-direction:column;
+    align-items:center; gap:10px; padding:10px 0 4px;
+  }
+  .verifying-overlay.active { display:flex; }
+  .verify-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:9px; letter-spacing:0.45em; color:var(--gold);
+    text-transform:uppercase; animation:vBlink 0.7s step-end infinite;
+  }
+  @keyframes vBlink { 0%,100%{opacity:1;} 50%{opacity:0.12;} }
+  .scan-bar {
+    width:180px; height:2px;
+    background:rgba(201,168,76,0.08); border-radius:1px; overflow:hidden; position:relative;
+  }
+  .scan-bar::after {
+    content:''; position:absolute; top:0; left:-50%; width:50%; height:100%;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    animation:scanMove 0.9s ease-in-out infinite;
+  }
+  @keyframes scanMove { 0%{left:-50%;} 100%{left:100%;} }
+  .dot-row { display:flex; gap:5px; }
+  .dot {
+    width:5px; height:5px; border-radius:50%;
+    background:var(--gold); box-shadow:0 0 5px var(--gold);
+    animation:dotBounce 0.9s ease-in-out infinite;
+  }
+  .dot:nth-child(2){ animation-delay:0.16s; }
+  .dot:nth-child(3){ animation-delay:0.32s; }
+  @keyframes dotBounce { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-5px);} }
+
+  /* ===== STATUS ===== */
+  .status-msg {
+    font-family:'Share Tech Mono', monospace;
+    font-size:9px; letter-spacing:0.2em; text-align:center;
+    margin-top:10px; min-height:14px; text-transform:uppercase;
+  }
+  .status-msg.error {
+    color:#ff3333; text-shadow:0 0 9px rgba(255,0,0,0.65);
+    animation:statusFlicker 0.1s linear infinite;
+  }
+  @keyframes statusFlicker { 0%,100%{opacity:1;} 50%{opacity:0.68;} }
+  .status-msg.success { color:#00ff88; text-shadow:0 0 9px rgba(0,255,136,0.45); }
+
+  /* ===== SUCCESS / FLOWER SCREEN ===== */
+  .success-screen {
+    position:fixed; inset:0; z-index:500;
+    display:none; background:#091507; pointer-events:none;
+  }
+  .success-screen.active { display:block; pointer-events:all; }
+  #flowerCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
+
+  /* Brief intro overlay */
+  .flower-intro {
+    position:absolute; inset:0; z-index:10;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:32px; pointer-events:none;
+    animation:introFade 8s ease-in-out forwards;
+    /* Dark radial vignette so text is readable over flowers */
+    background: radial-gradient(ellipse 70% 80% at 50% 50%,
+      rgba(4,8,12,0.82) 0%,
+      rgba(4,8,12,0.55) 55%,
+      rgba(4,8,12,0) 100%);
+  }
+  @keyframes introFade {
+    0%  { opacity:0; }
+    8%  { opacity:1; }
+    75% { opacity:1; }
+    100%{ opacity:0; }
+  }
+  .success-emblem { font-size:72px; display:block; margin-bottom:18px; }
+  .success-emblem.spin { animation:emblemReveal 0.9s cubic-bezier(0.34,1.56,0.64,1) both; }
+  @keyframes emblemReveal {
+    0%  { transform:scale(0.2) rotate(-200deg); opacity:0; }
+    100%{ transform:scale(1) rotate(0deg); opacity:1; }
+  }
+  .success-divider {
+    width:140px; height:1px;
+    background:linear-gradient(90deg,transparent,var(--gold),transparent);
+    margin:14px auto;
+  }
+  .success-title {
+    font-family:'Cinzel', serif;
+    font-size:clamp(21px,5vw,35px); font-weight:900;
+    color:var(--gold); letter-spacing:0.07em;
+    text-shadow:0 0 42px rgba(201,168,76,0.55); margin-bottom:7px;
+  }
+  .success-sub {
+    font-family:'Cinzel', serif;
+    font-size:clamp(11px,2.4vw,14px); letter-spacing:0.26em;
+    color:var(--cream); opacity:0.62; margin-bottom:4px;
+  }
+  .success-msg {
+    font-family:'Crimson Pro', serif; font-style:italic;
+    font-size:clamp(13px,3vw,17px);
+    color:rgba(224,212,184,0.55); margin-top:20px;
+  }
+
+  /* Controls hint */
+  .flower-hint {
+    position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+    z-index:11; font-family:'Share Tech Mono', monospace;
+    font-size:10px; letter-spacing:0.3em; color:rgba(201,168,76,0.35);
+    text-transform:uppercase; white-space:nowrap; pointer-events:none;
+    animation:hintAnim 14s ease-in-out forwards;
+  }
+  @keyframes hintAnim {
+    0%,25%{ opacity:0; }
+    35%   { opacity:1; }
+    88%   { opacity:1; }
+    100%  { opacity:0; }
+  }
+
+  /* PARTICLES */
+  .particles { position:fixed; inset:0; pointer-events:none; z-index:45; overflow:hidden; }
+  .particle { position:absolute; border-radius:50%; opacity:0; }
+  @keyframes particleFly {
+    0%  { transform:translate(0,0) scale(1); opacity:1; }
+    100%{ transform:translate(var(--tx),var(--ty)) scale(0); opacity:0; }
+  }
+
+  /* ===== COUNTDOWN ===== */
+  .countdown-wrap {
+    margin-bottom:12px;
+    background:linear-gradient(180deg,#060a10 0%,#040709 100%);
+    border:1px solid rgba(201,168,76,0.12);
+    border-radius:3px; padding:10px 8px 8px;
+    box-shadow:inset 0 3px 8px rgba(0,0,0,0.9);
+    position:relative; overflow:hidden;
+  }
+  .countdown-wrap::before {
+    content:''; position:absolute; inset:0;
+    background:repeating-linear-gradient(0deg,
+      rgba(0,255,0,0.012) 0px, rgba(0,255,0,0.012) 1px,
+      transparent 1px, transparent 3px);
+    pointer-events:none;
+  }
+  .countdown-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.5em; color:rgba(201,168,76,0.35);
+    text-align:center; margin-bottom:8px; text-transform:uppercase;
+  }
+  .countdown-units {
+    display:flex; justify-content:center; align-items:flex-end; gap:4px;
+  }
+  .cd-unit { display:flex; flex-direction:column; align-items:center; gap:3px; }
+  .cd-num {
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(18px,4.5vw,26px);
+    color:#00ff66;
+    text-shadow:0 0 10px rgba(0,255,102,0.7), 0 0 24px rgba(0,255,102,0.35);
+    line-height:1;
+    min-width:2ch; text-align:center;
+    animation:cdFlicker 3.5s ease-in-out infinite;
+  }
+  .cd-num.urgent { color:#ff4444; text-shadow:0 0 10px rgba(255,68,68,0.8), 0 0 24px rgba(255,68,68,0.4); }
+  @keyframes cdFlicker {
+    0%,95%,100%{ opacity:1; }
+    96%{ opacity:0.7; }
+    97%{ opacity:1; }
+    98%{ opacity:0.5; }
+    99%{ opacity:1; }
+  }
+  .cd-sep {
+    font-family:'Share Tech Mono', monospace;
+    font-size:clamp(16px,4vw,22px); color:rgba(0,255,102,0.4);
+    line-height:1; padding-bottom:3px;
+    animation:sepBlink 1s step-end infinite;
+  }
+  @keyframes sepBlink { 0%,100%{opacity:1;} 50%{opacity:0.1;} }
+  .cd-lbl {
+    font-family:'Share Tech Mono', monospace;
+    font-size:7px; letter-spacing:0.2em; color:rgba(0,255,102,0.3);
+    text-transform:uppercase;
+  }
+  .cd-target {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.18em; color:rgba(201,168,76,0.3);
+    text-align:center; margin-top:7px; text-transform:uppercase;
+  }
+  .cd-expired {
+    font-family:'Cinzel', serif; font-size:11px; letter-spacing:0.3em;
+    color:var(--gold); text-align:center; padding:4px 0;
+    text-shadow:0 0 12px rgba(201,168,76,0.5);
+    animation:cdFlicker 2s ease-in-out infinite;
+  }
+
+  /* TABLET / kleine desktop */
+  @media (max-height:800px) {
+    .door-panel { padding:18px 20px 16px; }
+    .logo-wrap { margin-bottom:10px; }
+    .logo-wrap img { width:160px; }
+    .dial-area { margin-bottom:10px; }
+    .dial-body { width:48px; height:48px; }
+    .dial-ring-outer { width:62px; height:62px; }
+    .vault-heading { margin-bottom:12px; }
+    .countdown-wrap { margin-bottom:12px; padding:8px 8px 7px; }
+    .cd-num { font-size:clamp(16px,4vw,22px); }
+    .hline { margin-bottom:10px; }
+    .numpad-housing { margin-bottom:10px; padding:8px; }
+    .num-btn { padding:10px 5px; }
+  }
+
+  /* MOBIEL */
+  @media (max-width:480px) {
+    .page { padding:10px 8px 24px; }
+    .door-frame { padding:6px; }
+    .door-panel { padding:16px 10px 14px; }
+    .bolt-tl { top:7px; left:7px; }
+    .bolt-tr { top:7px; right:7px; }
+    .bolt-bl { bottom:7px; left:7px; }
+    .bolt-br { bottom:7px; right:7px; }
+    .logo-wrap { margin-bottom:8px; }
+    .logo-wrap img { width:150px; }
+    .dial-area { margin-bottom:8px; }
+    .dial-body { width:44px; height:44px; }
+    .dial-ring-outer { width:56px; height:56px; }
+    .vault-heading { margin-bottom:12px; }
+    .countdown-wrap { margin-bottom:12px; padding:8px 6px 7px; }
+    .cd-num { font-size:20px; }
+    .cd-sep { font-size:18px; }
+    .hline { margin-bottom:10px; }
+    .code-label { margin-bottom:6px; }
+    .code-digit { width:26px; height:40px; font-size:15px; }
+    .code-row { gap:2px; margin-bottom:10px; }
+    .numpad-housing { margin-bottom:10px; padding:7px; }
+    .numpad { gap:4px; }
+    .num-btn { padding:11px 4px; font-size:14px; }
+    .submit-btn { padding:12px; }
+    .status-msg { margin-top:8px; }
+  }
+
+  /* Kleine telefoons */
+  @media (max-width:360px) {
+    .code-digit { width:22px; height:36px; font-size:13px; }
+    .code-row { gap:1px; }
+    .num-btn { padding:10px 2px; font-size:13px; }
+    .logo-wrap img { width:130px; }
+  }
+
+  /* ===== GATEKEEPER PAGE ===== */
+  #gatePage {
+    position:fixed; inset:0; z-index:900;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--bg);
+    transition:opacity 0.8s ease, visibility 0.8s;
+  }
+  #gatePage.unlocked {
+    opacity:0; visibility:hidden; pointer-events:none;
+  }
+  .gate-panel {
+    width:100%; max-width:380px; padding:0 16px;
+    display:flex; flex-direction:column; align-items:center;
+    animation: vaultDrop 1.2s cubic-bezier(0.16,1,0.3,1) both;
+  }
+  .gate-logo {
+    margin-bottom:22px;
+  }
+  .gate-logo img {
+    width:160px; max-width:55vw;
+    filter:drop-shadow(0 4px 18px rgba(201,168,76,0.18)) brightness(0.88);
+  }
+  .gate-title {
+    font-family:'Cinzel', serif;
+    font-size:clamp(9px,2vw,11px); letter-spacing:0.42em;
+    color:rgba(201,168,76,0.55); text-transform:uppercase;
+    margin-bottom:6px; text-align:center;
+  }
+  .gate-divider {
+    width:120px; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(201,168,76,0.25),transparent);
+    margin:0 auto 22px;
+  }
+  .gate-lock-icon {
+    font-size:40px; margin-bottom:18px;
+    animation: gateLockPulse 3s ease-in-out infinite;
+    filter: drop-shadow(0 0 12px rgba(201,168,76,0.3));
+  }
+  @keyframes gateLockPulse {
+    0%,100%{ filter:drop-shadow(0 0 8px rgba(201,168,76,0.2)); }
+    50%    { filter:drop-shadow(0 0 22px rgba(201,168,76,0.55)); }
+  }
+  .gate-input-wrap {
+    width:100%; position:relative; margin-bottom:12px;
+  }
+  .gate-input {
+    width:100%; padding:13px 16px;
+    background:linear-gradient(180deg,#060a10 0%,#040709 100%);
+    border:1px solid rgba(201,168,76,0.18);
+    border-bottom:2px solid rgba(0,0,0,0.75);
+    border-radius:3px;
+    color:var(--gold-bright);
+    font-family:'Share Tech Mono', monospace;
+    font-size:15px; letter-spacing:0.18em;
+    text-align:center; outline:none;
+    box-shadow:inset 0 3px 8px rgba(0,0,0,0.95);
+    transition:border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance:none;
+    appearance:none;
+  }
+  .gate-input::placeholder {
+    color:rgba(201,168,76,0.2); letter-spacing:0.35em; font-size:11px;
+  }
+  .gate-input:focus {
+    border-color:rgba(201,168,76,0.45);
+    box-shadow:inset 0 3px 8px rgba(0,0,0,0.95), 0 0 18px rgba(201,168,76,0.1);
+  }
+  .gate-input.gate-error {
+    border-color:rgba(220,0,0,0.7) !important;
+    animation:gateErrShake 0.5s cubic-bezier(0.36,0.07,0.19,0.97) both;
+    box-shadow:0 0 18px rgba(204,0,0,0.4), inset 0 3px 8px rgba(0,0,0,0.95) !important;
+    color:#ff4444 !important;
+  }
+  @keyframes gateErrShake {
+    0%,100%{ transform:translateX(0); }
+    15%{ transform:translateX(-10px); }
+    30%{ transform:translateX(10px); }
+    45%{ transform:translateX(-8px); }
+    60%{ transform:translateX(8px); }
+    75%{ transform:translateX(-4px); }
+    90%{ transform:translateX(4px); }
+  }
+  .gate-err-msg {
+    font-family:'Share Tech Mono', monospace;
+    font-size:9px; letter-spacing:0.3em; color:#ff3333;
+    text-align:center; margin-bottom:10px; min-height:14px;
+    text-transform:uppercase; opacity:0; transition:opacity 0.2s;
+    text-shadow:0 0 8px rgba(255,0,0,0.6);
+    animation:statusFlicker 0.1s linear infinite;
+  }
+  .gate-err-msg.visible { opacity:1; }
+  .gate-btn {
+    width:100%; padding:14px;
+    background:linear-gradient(180deg,#27200e 0%,#1a1308 100%);
+    border:1px solid rgba(201,168,76,0.3);
+    border-bottom:2px solid rgba(0,0,0,0.75);
+    border-radius:3px; color:var(--gold);
+    font-family:'Cinzel', serif; font-size:clamp(11px,2.2vw,13px);
+    font-weight:700; letter-spacing:0.28em; cursor:pointer;
+    text-transform:uppercase;
+    transition:all 0.2s ease;
+    box-shadow:0 4px 14px rgba(0,0,0,0.75), 0 0 24px rgba(201,168,76,0.05), inset 0 1px 0 rgba(201,168,76,0.13);
+    text-shadow:0 0 14px rgba(201,168,76,0.28);
+    position:relative; overflow:hidden;
+  }
+  .gate-btn:hover {
+    background:linear-gradient(180deg,#382d16 0%,#24190b 100%);
+    border-color:rgba(201,168,76,0.58); color:var(--gold-bright);
+    box-shadow:0 4px 22px rgba(0,0,0,0.9), 0 0 35px rgba(201,168,76,0.14), inset 0 1px 0 rgba(201,168,76,0.22);
+    text-shadow:0 0 22px rgba(201,168,76,0.55);
+  }
+  .gate-btn:active {
+    transform:translateY(1px); border-bottom-width:1px;
+    box-shadow:0 2px 7px rgba(0,0,0,0.8), inset 0 2px 5px rgba(0,0,0,0.45);
+  }
+  .gate-hint {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.25em; color:rgba(201,168,76,0.18);
+    text-align:center; margin-top:18px; text-transform:uppercase;
+  }
+  .gate-armed {
+    display:flex; align-items:center; gap:5px; margin-bottom:20px;
+  }
+  .gate-armed-led {
+    width:6px; height:6px; border-radius:50%;
+    background:var(--alarm);
+    box-shadow:0 0 6px var(--alarm), 0 0 14px rgba(204,0,0,0.45);
+    animation:ledPulse 2s ease-in-out infinite;
+  }
+  .gate-armed-label {
+    font-family:'Share Tech Mono', monospace;
+    font-size:8px; letter-spacing:0.15em;
+    color:rgba(204,0,0,0.45); text-transform:uppercase;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bgCanvas"></canvas>
+<div class="vignette"></div>
+<div class="scanlines"></div>
+<div class="particles" id="particles"></div>
+
+<!-- GATEKEEPER -->
+<div id="gatePage">
+  <div class="gate-panel">
+    <div class="gate-logo">
+      <img src="KAMERADENWEEKEND-LOGO.png" alt="Kameradenweekend 2026" />
+    </div>
+    <div class="gate-title">Beveiligde Toegang</div>
+    <div class="gate-divider"></div>
+    <div class="gate-armed">
+      <div class="gate-armed-led"></div>
+      <div class="gate-armed-label">Systeem Vergrendeld</div>
+    </div>
+    <div class="gate-lock-icon">🔐</div>
+    <div class="gate-input-wrap">
+      <input class="gate-input" id="gateInput" type="password"
+        placeholder="— wachtwoord —" autocomplete="off" spellcheck="false" />
+    </div>
+    <div class="gate-err-msg" id="gateErrMsg">Toegang geweigerd</div>
+    <button class="gate-btn" id="gateBtn">⚿ &nbsp; Toegang</button>
+    <div class="gate-hint">Alleen bevoegd personeel</div>
+  </div>
+</div>
+
+<!-- ALARM -->
+<div id="alarmOverlay"></div>
+<div id="alarmWarning">
+  <div class="alarm-main">⚠ VERKEERDE CODE ⚠</div>
+  <div class="alarm-sub">Jammer joh, pak gauw een biertje</div>
+  <div class="alarm-code">want dit duurt nog wel even</div>
+  <div class="click-hint">— klik ergens om het opnieuw te proberen —</div>
+</div>
+
+<!-- SUCCESS / INFINITE IRIS FIELD -->
+<div class="success-screen" id="successScreen">
+  <canvas id="flowerCanvas"></canvas>
+  <div class="flower-intro">
+    <span class="success-emblem" id="successEmblem">🏕️</span>
+    <div class="success-divider"></div>
+    <div class="success-title">Kluis Gekraakt!</div>
+    <div class="success-sub">Welkom in</div>
+    <div class="success-title" style="font-size:clamp(15px,3.5vw,22px);margin-bottom:4px;">Keet de Boomhut</div>
+    <div class="success-sub">Kameradenweekend</div>
+    <div class="success-title" style="font-size:clamp(28px,7vw,52px);letter-spacing:0.13em;text-shadow:0 0 65px rgba(201,168,76,0.75);">2026</div>
+    <div class="success-divider"></div>
+    <div class="success-msg">Zow, zow, netjes. Wellicht schuilt er een hint tussen de bloemen</div>
+  </div>
+  <div class="flower-hint">Sleep &middot; scroll of knijp om te verkennen</div>
+</div>
+
+<!-- MAIN -->
+<div class="page">
+  <div class="vault-door" id="vaultDoor">
+    <div class="door-frame">
+      <div class="door-panel" id="doorPanel">
+
+        <!-- Corner bolts -->
+        <div class="bolt bolt-tl"></div>
+        <div class="bolt bolt-tr"></div>
+        <div class="bolt bolt-bl"></div>
+        <div class="bolt bolt-br"></div>
+
+        <!-- Armed LED -->
+        <div class="armed-strip">
+          <div class="armed-led" id="armedLed"></div>
+          <div class="armed-label">BEVEILIGD</div>
+        </div>
+
+        <!-- Logo -->
+        <div class="logo-wrap">
+          <img src="KAMERADENWEEKEND-LOGO.png" alt="Keet de Boomhut – Kameradenweekend 2026" />
+        </div>
+
+        <!-- Combination dial -->
+        <div class="dial-area">
+          <div class="dial-ring-outer">
+            <div class="dial-body" id="dialBody">
+              <div class="dial-ticks"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Heading -->
+        <div class="vault-heading">
+          <div class="vault-title">Kameradenweekend Beveiligingssysteem</div>
+          <div class="vault-subtitle">Voer de geheime 10-cijferige toegangscode in</div>
+        </div>
+
+        <!-- Countdown -->
+        <div class="countdown-wrap" id="countdownWrap">
+          <div class="countdown-label">⏱ Tijd tot activering</div>
+          <div class="countdown-units" id="countdownUnits">
+            <div class="cd-unit">
+              <div class="cd-num" id="cdDays">--</div>
+              <div class="cd-lbl">dagen</div>
+            </div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit">
+              <div class="cd-num" id="cdHours">--</div>
+              <div class="cd-lbl">uur</div>
+            </div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit">
+              <div class="cd-num" id="cdMins">--</div>
+              <div class="cd-lbl">min</div>
+            </div>
+            <div class="cd-sep">:</div>
+            <div class="cd-unit">
+              <div class="cd-num" id="cdSecs">--</div>
+              <div class="cd-lbl">sec</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hline"></div>
+
+        <!-- Code display -->
+        <div class="code-label">Toegangscode</div>
+        <div class="code-row" id="codeRow">
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d0" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d1" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d2" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d3" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d4" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d5" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d6" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d7" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d8" autocomplete="off"/>
+          <input class="code-digit" type="tel" maxlength="1" inputmode="numeric" pattern="[0-9]*" id="d9" autocomplete="off"/>
+        </div>
+
+        <div class="hline"></div>
+
+        <!-- Numpad -->
+        <div class="numpad-housing">
+          <div class="numpad" id="numpad">
+            <button class="num-btn" data-n="1">1</button>
+            <button class="num-btn" data-n="2">2</button>
+            <button class="num-btn" data-n="3">3</button>
+            <button class="num-btn" data-n="4">4</button>
+            <button class="num-btn" data-n="5">5</button>
+            <button class="num-btn" data-n="6">6</button>
+            <button class="num-btn" data-n="7">7</button>
+            <button class="num-btn" data-n="8">8</button>
+            <button class="num-btn" data-n="9">9</button>
+            <button class="num-btn zero" data-n="0">0</button>
+            <button class="num-btn del" id="delBtn">⌫  DEL</button>
+          </div>
+        </div>
+
+        <!-- Submit -->
+        <div class="submit-wrap" id="submitWrap">
+          <button class="submit-btn" id="submitBtn" disabled>⚿ &nbsp; Kraak de Kluis</button>
+        </div>
+
+        <!-- Verifying -->
+        <div class="verifying-overlay" id="verifyingOverlay">
+          <div class="verify-label">Verificatie bezig</div>
+          <div class="scan-bar"></div>
+          <div class="dot-row">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          </div>
+        </div>
+
+        <div class="status-msg" id="statusMsg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // GATEKEEPER
+  // ============================================================
+  const GATE_PASSWORD = 'BasHeinNiels2026';
+  const GATE_KEY      = 'kw2026_gate';
+
+  (function initGate() {
+    const gatePage = document.getElementById('gatePage');
+    const gateInput = document.getElementById('gateInput');
+    const gateBtn   = document.getElementById('gateBtn');
+    const gateErr   = document.getElementById('gateErrMsg');
+
+    if (sessionStorage.getItem(GATE_KEY) === '1') {
+      gatePage.classList.add('unlocked');
+      return;
+    }
+
+    function tryUnlock() {
+      if (gateInput.value === GATE_PASSWORD) {
+        sessionStorage.setItem(GATE_KEY, '1');
+        gatePage.classList.add('unlocked');
+      } else {
+        gateInput.classList.remove('gate-error');
+        void gateInput.offsetWidth; // reflow to restart animation
+        gateInput.classList.add('gate-error');
+        gateErr.classList.add('visible');
+        gateInput.value = '';
+        setTimeout(() => {
+          gateInput.classList.remove('gate-error');
+          gateErr.classList.remove('visible');
+        }, 1800);
+      }
+    }
+
+    gateBtn.addEventListener('click', tryUnlock);
+    gateInput.addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  })();
+
+  // ============================================================
+  // CONFIG
+  // ============================================================
+  const CORRECT_CODE = '1234567890';
+
+  // ============================================================
+  // CANVAS — floating amber embers
+  // ============================================================
+  const canvas = document.getElementById('bgCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  function resizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  function mkEmber(randomY) {
+    return {
+      x: Math.random() * canvas.width,
+      y: randomY ? Math.random() * canvas.height : canvas.height + 10,
+      r:     Math.random() * 1.4 + 0.3,
+      speed: Math.random() * 0.32 + 0.07,
+      drift: (Math.random() - 0.5) * 0.28,
+      alpha: Math.random() * 0.32 + 0.05,
+      fade:  Math.random() * 0.0009 + 0.0002,
+      color: Math.random() > 0.55 ? '#c9a84c' : '#b87333',
+    };
+  }
+
+  const embers = Array.from({length: 65}, () => mkEmber(true));
+
+  (function animEmbers() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    embers.forEach((e, i) => {
+      e.y -= e.speed; e.x += e.drift; e.alpha -= e.fade;
+      if (e.y < -10 || e.alpha <= 0) embers[i] = mkEmber(false);
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, e.alpha);
+      ctx.fillStyle = e.color;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    });
+    requestAnimationFrame(animEmbers);
+  })();
+
+  // ============================================================
+  // ELEMENTS
+  // ============================================================
+  const digits          = Array.from({length:10}, (_,i) => document.getElementById('d'+i));
+  const submitBtn       = document.getElementById('submitBtn');
+  const submitWrap      = document.getElementById('submitWrap');
+  const verifyingOverlay= document.getElementById('verifyingOverlay');
+  const statusMsg       = document.getElementById('statusMsg');
+  const successScreen   = document.getElementById('successScreen');
+  const successContent  = document.getElementById('successContent');
+  const successEmblem   = document.getElementById('successEmblem');
+  const vaultDoor       = document.getElementById('vaultDoor');
+  const doorPanel       = document.getElementById('doorPanel');
+  const alarmOverlay    = document.getElementById('alarmOverlay');
+  const alarmWarning    = document.getElementById('alarmWarning');
+  const armedLed        = document.getElementById('armedLed');
+  const dialBody        = document.getElementById('dialBody');
+
+  let locked = false;
+
+  // ============================================================
+  // DIAL PUNCH — spin faster on keypress
+  // ============================================================
+  function punchDial(reverse) {
+    dialBody.style.animationDirection = reverse ? 'reverse' : 'normal';
+    dialBody.style.animationDuration  = '1.4s';
+    setTimeout(() => {
+      dialBody.style.animationDuration  = '16s';
+      dialBody.style.animationDirection = 'normal';
+    }, 750);
+  }
+
+  // ============================================================
+  // SPARKS — particles burst from button on press
+  // ============================================================
+  function addSparks(el, cx, cy, color) {
+    const rect  = el.getBoundingClientRect();
+    const lx    = cx - rect.left;
+    const ly    = cy - rect.top;
+    const count = 5 + Math.floor(Math.random() * 6);
+    for (let i = 0; i < count; i++) {
+      const s = document.createElement('div');
+      s.classList.add('spark');
+      const angle = (Math.PI * 2 * i / count) + (Math.random() - 0.5) * 1.3;
+      const dist  = 14 + Math.random() * 38;
+      const size  = 1.5 + Math.random() * 3;
+      const c     = color || (Math.random() > 0.3 ? '#e8c56a' : '#c9a84c');
+      s.style.cssText = `
+        width:${size}px;height:${size}px;
+        left:${lx}px;top:${ly}px;
+        background:${c};
+        box-shadow:0 0 ${size*2}px ${c};
+        --sx:${Math.cos(angle)*dist}px;
+        --sy:${Math.sin(angle)*dist}px;
+        animation-delay:${Math.random()*0.04}s;
+      `;
+      el.appendChild(s);
+      setTimeout(() => s.remove(), 520);
+    }
+    // Panel flicker on every press
+    doorPanel.classList.remove('flicker');
+    void doorPanel.offsetWidth;
+    doorPanel.classList.add('flicker');
+    setTimeout(() => doorPanel.classList.remove('flicker'), 150);
+  }
+
+  // ============================================================
+  // DIGIT GLOW HELPER
+  // ============================================================
+  function glowDigit(inp) {
+    inp.classList.remove('glow-in');
+    void inp.offsetWidth;
+    inp.classList.add('glow-in');
+    setTimeout(() => inp.classList.remove('glow-in'), 300);
+  }
+
+  // ============================================================
+  // DIGIT INPUTS
+  // ============================================================
+  digits.forEach((inp, i) => {
+    inp.addEventListener('input', e => {
+      const v = e.target.value.replace(/\D/g,'');
+      e.target.value = v ? v[v.length-1] : '';
+      inp.classList.toggle('filled', !!e.target.value);
+      if (e.target.value) {
+        glowDigit(inp);
+        punchDial(false);
+        if (i < 9) digits[i+1].focus();
+      }
+      updateSubmit();
+    });
+
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i > 0) {
+        digits[i-1].value = '';
+        digits[i-1].classList.remove('filled');
+        digits[i-1].focus();
+        punchDial(true);
+        updateSubmit();
+      }
+      if (e.key === 'Enter') trySubmit();
+    });
+
+    inp.addEventListener('paste', e => {
+      e.preventDefault();
+      const txt = (e.clipboardData||window.clipboardData).getData('text').replace(/\D/g,'').slice(0,10);
+      txt.split('').forEach((c,j) => {
+        if (digits[j]) { digits[j].value = c; digits[j].classList.add('filled'); }
+      });
+      digits[Math.min(txt.length,9)].focus();
+      updateSubmit();
+    });
+  });
+
+  // ============================================================
+  // NUMPAD
+  // ============================================================
+  document.querySelectorAll('.num-btn[data-n]').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      if (locked) return;
+      addSparks(this, e.clientX, e.clientY, null);
+      punchDial(false);
+      const empty = digits.findIndex(d => !d.value);
+      if (empty !== -1) {
+        digits[empty].value = this.dataset.n;
+        digits[empty].classList.add('filled');
+        glowDigit(digits[empty]);
+        digits[Math.min(empty+1,9)].focus();
+        updateSubmit();
+      }
+    });
+  });
+
+  document.getElementById('delBtn').addEventListener('click', function(e) {
+    if (locked) return;
+    addSparks(this, e.clientX, e.clientY, '#ff6666');
+    punchDial(true);
+    const last = [...digits].reverse().find(d => d.value);
+    if (last) { last.value = ''; last.classList.remove('filled','glow-in'); last.focus(); }
+    updateSubmit();
+  });
+
+  function updateSubmit() {
+    submitBtn.disabled = !digits.every(d => d.value !== '');
+  }
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
+  submitBtn.addEventListener('click', function(e) {
+    addSparks(this, e.clientX, e.clientY, '#c9a84c');
+    trySubmit();
+  });
+
+  function trySubmit() {
+    if (locked || submitBtn.disabled) return;
+    locked = true;
+    const code = digits.map(d => d.value).join('');
+    showVerifying();
+    dialBody.style.animationDuration = '2.5s';
+    setTimeout(() => code === CORRECT_CODE ? doSuccess() : doError(), 2600);
+  }
+
+  function showVerifying() {
+    submitWrap.style.display = 'none';
+    verifyingOverlay.classList.add('active');
+    digits.forEach(d => d.classList.add('verifying'));
+    statusMsg.textContent = ''; statusMsg.className = 'status-msg';
+  }
+
+  function hideVerifying() {
+    verifyingOverlay.classList.remove('active');
+    digits.forEach(d => d.classList.remove('verifying'));
+    submitWrap.style.display = '';
+    dialBody.style.animationDuration = '16s';
+  }
+
+  // ============================================================
+  // ERROR — full alarm sequence
+  // ============================================================
+  function doError() {
+    hideVerifying();
+
+    // Red strobe + warning text
+    alarmOverlay.classList.remove('active');
+    alarmWarning.classList.remove('active');
+    void alarmOverlay.offsetWidth;
+    alarmOverlay.classList.add('active');
+    alarmWarning.classList.add('active');
+
+    // Violent vault shake
+    vaultDoor.classList.remove('shake');
+    void vaultDoor.offsetWidth;
+    vaultDoor.classList.add('shake');
+
+    // LED goes solid red
+    armedLed.classList.add('alarming');
+
+    // Dial spins frantically
+    dialBody.style.animationDuration = '0.7s';
+
+    // Error state on digits
+    digits.forEach(d => { d.classList.remove('filled','verifying'); d.classList.add('error'); });
+
+    statusMsg.textContent = '⚠  Jammer joh, pak gauw een biertje, want dit duurt nog wel even';
+    statusMsg.classList.add('error');
+
+    // Shake stopt vanzelf na animatie; wacht op klik om te resetten
+    setTimeout(() => vaultDoor.classList.remove('shake'), 950);
+
+    function dismissAlarm() {
+      document.removeEventListener('click', dismissAlarm);
+      alarmOverlay.classList.remove('active');
+      alarmWarning.classList.remove('active');
+      armedLed.classList.remove('alarming');
+      dialBody.style.animationDuration = '16s';
+      digits.forEach(d => { d.classList.remove('error','filled'); d.value = ''; });
+      statusMsg.textContent = ''; statusMsg.className = 'status-msg';
+      submitBtn.disabled = true;
+      digits[0].focus();
+      locked = false;
+    }
+
+    // Kleine delay zodat de huidige klik (submit) de alarm niet meteen sluit
+    setTimeout(() => document.addEventListener('click', dismissAlarm), 400);
+  }
+
+  // ============================================================
+  // SUCCESS
+  // ============================================================
+  function doSuccess() {
+    hideVerifying();
+    digits.forEach(d => { d.classList.remove('filled','verifying'); d.classList.add('success'); });
+    statusMsg.textContent = '✓  Code correct — Kluis wordt geopend...';
+    statusMsg.classList.add('success');
+    dialBody.style.animationDuration = '0.9s';
+    spawnParticles();
+    setTimeout(() => {
+      successScreen.classList.add('active');
+      document.getElementById('successEmblem').classList.add('spin');
+      startFlowerField();
+    }, 1000);
+  }
+
+  // ============================================================
+  // INFINITE IRIS FIELD
+  // ============================================================
+  function startFlowerField() {
+    const fc = document.getElementById('flowerCanvas');
+    if (!fc) return;
+    const ctx = fc.getContext('2d');
+    let W = fc.width  = window.innerWidth;
+    let H = fc.height = window.innerHeight;
+    window.addEventListener('resize', () => {
+      W = fc.width  = window.innerWidth;
+      H = fc.height = window.innerHeight;
+    });
+    const cam = { x: 0, y: 0, zoom: 80 };
+
+    // Simple XOR-shift RNG — no Math.imul, always works
+    function mkRng(seed) {
+      let s = (seed ^ 0xdeadbeef) >>> 0;
+      if (s === 0) s = 1;
+      return () => {
+        s ^= s << 13; s ^= s >>> 17; s ^= s << 5;
+        return (s >>> 0) / 4294967296;
+      };
+    }
+    function cellHash(lv, i, j) {
+      let h = (lv * 374761393 + i * 668265263 + j * 2246822519) | 0;
+      h ^= h >>> 15; h = (h * 2246822519) | 0;
+      h ^= h >>> 13; h = (h * 3266489917) | 0;
+      return h >>> 0;
+    }
+
+    // Draw one Iris pseudacorus — flat colours, quadratic curves (robust)
+    function drawIris(x, y, r, seed) {
+      if (r < 1.5) return;
+      const R   = mkRng(seed);
+      const rot = R() * 6.2832;
+      const hue = 48 + R() * 12;       // 48-60: golden yellow
+      const yc  = `hsl(${hue|0},92%,60%)`;   // fall colour
+      const ylc = `hsl(${hue+5|0},88%,70%)`; // standard colour
+      const org = 'hsla(28,90%,42%,0.72)';   // orange stripe
+
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(rot);
+
+      // 3 falls (large outer petals, pointing outward)
+      for (let p = 0; p < 3; p++) {
+        ctx.save();
+        ctx.rotate(p * 2.0944); // 120°
+        ctx.beginPath();
+        ctx.moveTo(0, 0);
+        ctx.quadraticCurveTo( r * .55, r * .45,  r * .06, r * 1.08);
+        ctx.quadraticCurveTo(-r * .55, r * .45,  0,       0);
+        ctx.closePath();
+        ctx.fillStyle = yc;
+        ctx.fill();
+        // orange centre stripe
+        if (r > 8) {
+          ctx.beginPath();
+          ctx.moveTo(0, r * .12);
+          ctx.quadraticCurveTo( r * .07, r * .58, 0, r * .97);
+          ctx.quadraticCurveTo(-r * .07, r * .58, 0, r * .12);
+          ctx.closePath();
+          ctx.fillStyle = org;
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // 3 standards (smaller inner petals, 60° offset, pointing inward/up)
+      for (let p = 0; p < 3; p++) {
+        ctx.save();
+        ctx.rotate(p * 2.0944 + 1.0472); // 60° offset
+        ctx.beginPath();
+        ctx.moveTo(0, r * .04);
+        ctx.quadraticCurveTo( r * .28, -r * .3,  r * .08, -r * .75);
+        ctx.quadraticCurveTo(0,        -r * .88,  0,       -r * .88);
+        ctx.quadraticCurveTo(-r * .28, -r * .3,   0,        r * .04);
+        ctx.closePath();
+        ctx.fillStyle = ylc;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Centre dot
+      ctx.beginPath();
+      ctx.arc(0, 0, Math.max(1.5, r * .13), 0, 6.2832);
+      ctx.fillStyle = 'hsl(35,85%,35%)';
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // Deterministic shadow patches for the mystery effect
+    function patchVal(ix, iy) {
+      let h = (ix * 1619 ^ iy * 31337 ^ ix * iy) | 0;
+      h ^= h >>> 13; h = (h * 0x45d9f3b) | 0;
+      return ((h ^ h >>> 15) >>> 0) / 4294967296;
+    }
+
+    function render() {
+      ctx.fillStyle = '#0a1c07';
+      ctx.fillRect(0, 0, W, H);
+
+      const hW = W / 2 / cam.zoom;
+      const hH = H / 2 / cam.zoom;
+
+      // Dark mystery patches (drawn first, flowers on top)
+      const PS = 0.8;
+      const pi0 = Math.floor((cam.x - hW) / PS) - 1;
+      const pi1 = Math.ceil( (cam.x + hW) / PS) + 1;
+      const pj0 = Math.floor((cam.y - hH) / PS) - 1;
+      const pj1 = Math.ceil( (cam.y + hH) / PS) + 1;
+      if ((pi1 - pi0) * (pj1 - pj0) < 3000) {
+        for (let pi = pi0; pi <= pi1; pi++) {
+          for (let pj = pj0; pj <= pj1; pj++) {
+            const v = patchVal(pi, pj);
+            if (v < 0.16) {
+              const sx = ((pi + .5) * PS - cam.x) * cam.zoom + W/2;
+              const sy = ((pj + .5) * PS - cam.y) * cam.zoom + H/2;
+              const pr = PS * cam.zoom * (.25 + v * .6);
+              const g = ctx.createRadialGradient(sx, sy, 0, sx, sy, pr);
+              g.addColorStop(0, 'rgba(0,0,0,.45)');
+              g.addColorStop(1, 'rgba(0,0,0,0)');
+              ctx.fillStyle = g;
+              ctx.beginPath();
+              ctx.arc(sx, sy, pr, 0, 6.2832);
+              ctx.fill();
+            }
+          }
+        }
+      }
+
+      // Multi-level flowers (infinite zoom)
+      const RATIO = 2.5;
+      for (let lv = -4; lv <= 16; lv++) {
+        const sp = Math.pow(RATIO, -lv); // world-space spacing
+        const ss = sp * cam.zoom;        // screen-space spacing
+        if (ss < 32 || ss > 900) continue;
+
+        let alpha = 1;
+        if (ss < 60)  alpha = (ss - 32) / 28;
+        if (ss > 650) alpha = (900 - ss) / 250;
+        alpha = Math.max(0, Math.min(1, alpha));
+
+        const iMin = Math.floor((cam.x - hW) / sp) - 1;
+        const iMax = Math.ceil( (cam.x + hW) / sp) + 1;
+        const jMin = Math.floor((cam.y - hH) / sp) - 1;
+        const jMax = Math.ceil( (cam.y + hH) / sp) + 1;
+        if ((iMax - iMin) * (jMax - jMin) > 2000) continue;
+
+        ctx.globalAlpha = alpha;
+        const fr = ss * 0.38;
+
+        for (let i = iMin; i <= iMax; i++) {
+          for (let j = jMin; j <= jMax; j++) {
+            const seed = cellHash(lv, i, j);
+            const R    = mkRng(seed);
+            const wx   = (i + R() * .65 + .175) * sp;
+            const wy   = (j + R() * .65 + .175) * sp;
+            drawIris(
+              (wx - cam.x) * cam.zoom + W/2,
+              (wy - cam.y) * cam.zoom + H/2,
+              fr, seed
+            );
+          }
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Render loop
+    (function loop() { render(); requestAnimationFrame(loop); })();
+
+    // Mouse
+    let drag = null;
+    fc.addEventListener('mousedown', e => {
+      drag = { x: e.clientX, y: e.clientY, cx: cam.x, cy: cam.y };
+    });
+    window.addEventListener('mousemove', e => {
+      if (!drag) return;
+      cam.x = drag.cx - (e.clientX - drag.x) / cam.zoom;
+      cam.y = drag.cy - (e.clientY - drag.y) / cam.zoom;
+    });
+    window.addEventListener('mouseup', () => drag = null);
+    fc.addEventListener('wheel', e => {
+      e.preventDefault();
+      const f  = e.deltaY < 0 ? 1.1 : 1/1.1;
+      const rx = e.clientX - W/2, ry = e.clientY - H/2;
+      cam.x += rx/cam.zoom - rx/(cam.zoom*f);
+      cam.y += ry/cam.zoom - ry/(cam.zoom*f);
+      cam.zoom = Math.max(5, Math.min(1e13, cam.zoom*f));
+    }, { passive: false });
+
+    // Touch
+    let lastPinch = null, touchBase = null;
+    fc.addEventListener('touchstart', e => {
+      e.preventDefault();
+      if (e.touches.length === 1)
+        touchBase = { x: e.touches[0].clientX, y: e.touches[0].clientY, cx: cam.x, cy: cam.y };
+      if (e.touches.length >= 2) {
+        touchBase = null;
+        lastPinch = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY);
+      }
+    }, { passive: false });
+    fc.addEventListener('touchmove', e => {
+      e.preventDefault();
+      if (e.touches.length === 1 && touchBase) {
+        cam.x = touchBase.cx - (e.touches[0].clientX - touchBase.x) / cam.zoom;
+        cam.y = touchBase.cy - (e.touches[0].clientY - touchBase.y) / cam.zoom;
+      }
+      if (e.touches.length >= 2 && lastPinch !== null) {
+        const d  = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY);
+        const f  = d / lastPinch;
+        const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+        const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+        cam.x   += (mx - W/2)/cam.zoom - (mx - W/2)/(cam.zoom*f);
+        cam.y   += (my - H/2)/cam.zoom - (my - H/2)/(cam.zoom*f);
+        cam.zoom = Math.max(5, Math.min(1e13, cam.zoom*f));
+        lastPinch = d;
+      }
+    }, { passive: false });
+    fc.addEventListener('touchend', e => {
+      if (e.touches.length < 2) lastPinch  = null;
+      if (e.touches.length === 0) touchBase = null;
+    }, { passive: false });
+  }
+
+  // ============================================================
+  // PARTICLES
+  // ============================================================
+  function spawnParticles() {
+    const el = document.getElementById('particles');
+    const colors = ['#c9a84c','#e8c56a','#e0d4b8','#b87333','#00cc66','#ffb347'];
+    for (let i = 0; i < 90; i++) {
+      const p = document.createElement('div');
+      p.classList.add('particle');
+      const tx   = (Math.random()-0.5)*520+'px';
+      const ty   = (Math.random()*-520-60)+'px';
+      const size = 3+Math.random()*7;
+      const c    = colors[Math.floor(Math.random()*colors.length)];
+      p.style.cssText = `
+        left:${15+Math.random()*70}vw;
+        top:${25+Math.random()*50}vh;
+        background:${c};
+        --tx:${tx};--ty:${ty};
+        width:${size}px;height:${size}px;
+        box-shadow:0 0 ${size}px ${c};
+        animation:particleFly ${0.8+Math.random()*1.5}s ${Math.random()*0.7}s cubic-bezier(0.25,0.46,0.45,0.94) forwards;
+      `;
+      el.appendChild(p);
+    }
+    setTimeout(() => el.innerHTML='', 4000);
+  }
+
+  // ============================================================
+  // COUNTDOWN — donderdag 3 september 2026 12:00 lokale tijd
+  // ============================================================
+  const TARGET = new Date('2026-09-03T12:00:00');
+
+  function pad(n) { return String(n).padStart(2,'0'); }
+
+  function updateCountdown() {
+    const now  = new Date();
+    const diff = TARGET - now;
+    if (diff <= 0) {
+      document.getElementById('countdownUnits').innerHTML =
+        '<div class="cd-expired">⚿ Activering voltooid — Kluis operationeel</div>';
+      document.querySelector('.countdown-label').textContent = '✓ Gereed';
+      return;
+    }
+    const days  = Math.floor(diff / 86400000);
+    const hours = Math.floor((diff % 86400000) / 3600000);
+    const mins  = Math.floor((diff % 3600000)  / 60000);
+    const secs  = Math.floor((diff % 60000)    / 1000);
+    const urgent = days === 0;
+    ['cdDays','cdHours','cdMins','cdSecs'].forEach((id, i) => {
+      const el  = document.getElementById(id);
+      const val = [days, hours, mins, secs][i];
+      el.textContent = i === 0 ? String(val) : pad(val);
+      el.classList.toggle('urgent', urgent);
+    });
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000);
+
+  // Initial focus
+  setTimeout(() => digits[0].focus(), 900);
+</script>
+</body>
+</html>
