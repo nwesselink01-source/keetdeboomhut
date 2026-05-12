@@ -515,7 +515,7 @@
   /* ===== SUCCESS / FLOWER SCREEN ===== */
   .success-screen {
     position:fixed; inset:0; z-index:500;
-    display:none; background:#091507; pointer-events:none;
+    display:none; background:#3a7c22; pointer-events:none;
   }
   .success-screen.active { display:block; pointer-events:all; }
   #flowerCanvas { position:absolute; inset:0; width:100%; height:100%; display:block; }
@@ -1375,7 +1375,7 @@
     const cam = { x: 0, y: 0, zoom: 80 };
 
     const flowerImg = new Image();
-    flowerImg.src = 'bloem.png';
+    flowerImg.src = 'bloem.svg';
 
     // Simple XOR-shift RNG — no Math.imul, always works
     function mkRng(seed) {
@@ -1413,7 +1413,7 @@
     }
 
     function render() {
-      ctx.fillStyle = '#0a1c07';
+      ctx.fillStyle = '#3a7c22';
       ctx.fillRect(0, 0, W, H);
 
       const hW = W / 2 / cam.zoom;
