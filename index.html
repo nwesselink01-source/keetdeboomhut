@@ -1374,6 +1374,9 @@
     });
     const cam = { x: 0, y: 0, zoom: 80 };
 
+    const flowerImg = new Image();
+    flowerImg.src = 'bloem.png';
+
     // Simple XOR-shift RNG — no Math.imul, always works
     function mkRng(seed) {
       let s = (seed ^ 0xdeadbeef) >>> 0;
@@ -1390,65 +1393,15 @@
       return h >>> 0;
     }
 
-    // Draw one Iris pseudacorus — flat colours, quadratic curves (robust)
-    function drawIris(x, y, r, seed) {
-      if (r < 1.5) return;
-      const R   = mkRng(seed);
-      const rot = R() * 6.2832;
-      const hue = 48 + R() * 12;       // 48-60: golden yellow
-      const yc  = `hsl(${hue|0},92%,60%)`;   // fall colour
-      const ylc = `hsl(${hue+5|0},88%,70%)`; // standard colour
-      const org = 'hsla(28,90%,42%,0.72)';   // orange stripe
-
+    function drawFlower(x, y, r, seed) {
+      if (r < 1.5 || !flowerImg.complete) return;
+      const R    = mkRng(seed);
+      const rot  = R() * 6.2832;
+      const size = r * 2.6;
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(rot);
-
-      // 3 falls (large outer petals, pointing outward)
-      for (let p = 0; p < 3; p++) {
-        ctx.save();
-        ctx.rotate(p * 2.0944); // 120°
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.quadraticCurveTo( r * .55, r * .45,  r * .06, r * 1.08);
-        ctx.quadraticCurveTo(-r * .55, r * .45,  0,       0);
-        ctx.closePath();
-        ctx.fillStyle = yc;
-        ctx.fill();
-        // orange centre stripe
-        if (r > 8) {
-          ctx.beginPath();
-          ctx.moveTo(0, r * .12);
-          ctx.quadraticCurveTo( r * .07, r * .58, 0, r * .97);
-          ctx.quadraticCurveTo(-r * .07, r * .58, 0, r * .12);
-          ctx.closePath();
-          ctx.fillStyle = org;
-          ctx.fill();
-        }
-        ctx.restore();
-      }
-
-      // 3 standards (smaller inner petals, 60° offset, pointing inward/up)
-      for (let p = 0; p < 3; p++) {
-        ctx.save();
-        ctx.rotate(p * 2.0944 + 1.0472); // 60° offset
-        ctx.beginPath();
-        ctx.moveTo(0, r * .04);
-        ctx.quadraticCurveTo( r * .28, -r * .3,  r * .08, -r * .75);
-        ctx.quadraticCurveTo(0,        -r * .88,  0,       -r * .88);
-        ctx.quadraticCurveTo(-r * .28, -r * .3,   0,        r * .04);
-        ctx.closePath();
-        ctx.fillStyle = ylc;
-        ctx.fill();
-        ctx.restore();
-      }
-
-      // Centre dot
-      ctx.beginPath();
-      ctx.arc(0, 0, Math.max(1.5, r * .13), 0, 6.2832);
-      ctx.fillStyle = 'hsl(35,85%,35%)';
-      ctx.fill();
-
+      ctx.drawImage(flowerImg, -size / 2, -size / 2, size, size);
       ctx.restore();
     }
 
@@ -1519,7 +1472,7 @@
             const R    = mkRng(seed);
             const wx   = (i + R() * .65 + .175) * sp;
             const wy   = (j + R() * .65 + .175) * sp;
-            drawIris(
+            drawFlower(
               (wx - cam.x) * cam.zoom + W/2,
               (wy - cam.y) * cam.zoom + H/2,
               fr, seed
