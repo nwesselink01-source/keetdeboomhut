@@ -1024,8 +1024,13 @@
   // ============================================================
   // GATEKEEPER
   // ============================================================
-  const GATE_PASSWORD = 'BasHeinNiels2026';
-  const GATE_KEY      = 'kw2026_gate';
+  const GATE_HASH = '4a93b755a5bfd560b286b6c35f3c51d0a05d24f0bfe8f33074a7c01ded4ca480';
+  const GATE_KEY  = 'kw2026_gate';
+
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
 
   (function initGate() {
     const gatePage = document.getElementById('gatePage');
@@ -1038,13 +1043,14 @@
       return;
     }
 
-    function tryUnlock() {
-      if (gateInput.value === GATE_PASSWORD) {
+    async function tryUnlock() {
+      const hash = await sha256(gateInput.value);
+      if (hash === GATE_HASH) {
         sessionStorage.setItem(GATE_KEY, '1');
         gatePage.classList.add('unlocked');
       } else {
         gateInput.classList.remove('gate-error');
-        void gateInput.offsetWidth; // reflow to restart animation
+        void gateInput.offsetWidth;
         gateInput.classList.add('gate-error');
         gateErr.classList.add('visible');
         gateInput.value = '';
@@ -1062,7 +1068,7 @@
   // ============================================================
   // CONFIG
   // ============================================================
-  const CORRECT_CODE = '1234567890';
+  const CORRECT_HASH = 'c775e7b757ede630cd0aa1113bd102661ab38829ca52a6422ab782862f268646';
 
   // ============================================================
   // CANVAS — floating amber embers
@@ -1263,13 +1269,13 @@
     trySubmit();
   });
 
-  function trySubmit() {
+  async function trySubmit() {
     if (locked || submitBtn.disabled) return;
     locked = true;
-    const code = digits.map(d => d.value).join('');
+    const hash = await sha256(digits.map(d => d.value).join(''));
     showVerifying();
     dialBody.style.animationDuration = '2.5s';
-    setTimeout(() => code === CORRECT_CODE ? doSuccess() : doError(), 2600);
+    setTimeout(() => hash === CORRECT_HASH ? doSuccess() : doError(), 2600);
   }
 
   function showVerifying() {
